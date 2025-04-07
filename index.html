@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>カード画像レイアウト</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <h1>カード画像レイアウト</h1>
+
+  <div id="card-container">
+    <div class="card-box" id="card1">
+      <input type="file" accept="image/jpeg, image/png" onchange="loadImage(event, 1)" />
+      <img id="image1" class="card-image" />
+    </div>
+    <div class="card-box" id="card2">
+      <input type="file" accept="image/jpeg, image/png" onchange="loadImage(event, 2)" />
+      <img id="image2" class="card-image" />
+    </div>
+    <div class="card-box" id="card3">
+      <input type="file" accept="image/jpeg, image/png" onchange="loadImage(event, 3)" />
+      <img id="image3" class="card-image" />
+    </div>
+    <div class="card-box" id="card4">
+      <input type="file" accept="image/jpeg, image/png" onchange="loadImage(event, 4)" />
+      <img id="image4" class="card-image" />
+    </div>
+    <div class="card-box" id="card5">
+      <input type="file" accept="image/jpeg, image/png" onchange="loadImage(event, 5)" />
+      <img id="image5" class="card-image" />
+    </div>
+    <div class="card-box" id="card6">
+      <input type="file" accept="image/jpeg, image/png" onchange="loadImage(event, 6)" />
+      <img id="image6" class="card-image" />
+    </div>
+    <div class="card-box" id="card7">
+      <input type="file" accept="image/jpeg, image/png" onchange="loadImage(event, 7)" />
+      <img id="image7" class="card-image" />
+    </div>
+    <div class="card-box" id="card8">
+      <input type="file" accept="image/jpeg, image/png" onchange="loadImage(event, 8)" />
+      <img id="image8" class="card-image" />
+    </div>
+    <div class="card-box" id="card9">
+      <input type="file" accept="image/jpeg, image/png" onchange="loadImage(event, 9)" />
+      <img id="image9" class="card-image" />
+    </div>
+  </div>
+
+  <div class="controls">
+    <button onclick="downloadPDF()">PDF保存</button>
+    <button onclick="resetImages()">リセット</button>
+    <label for="cardSize">カードサイズ：</label>
+    <select id="cardSize" onchange="resizeCards()">
+      <option value="63x88">63mm × 88mm</option>
+      <option value="59x86">59mm × 86mm</option>
+      <option value="custom">カスタム</option>
+    </select>
+    <div id="customSize" style="display: none;">
+      <label for="width">幅（mm）:</label>
+      <input type="number" id="width" min="1" />
+      <label for="height">高さ（mm）:</label>
+      <input type="number" id="height" min="1" />
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
