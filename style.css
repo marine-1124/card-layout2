@@ -1,47 +1,51 @@
+/* スタイルの初期設定 */
 body {
   font-family: Arial, sans-serif;
-  text-align: center;
+  margin: 0;
+  padding: 0;
+  background-color: #f4f4f4;
 }
 
 h1 {
-  margin-bottom: 20px;
-}
-
-#card-container {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  margin: 20px 0;
-}
-
-.card-box {
-  border: 2px solid #ccc;
-  padding: 10px;
-  position: relative;
-}
-
-.card-box input[type="file"] {
-  position: absolute;
-  top: 5px;
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-.card-image {
-  width: 100%;
-  height: auto;
-  display: none;
-}
-
-.controls {
+  text-align: center;
   margin-top: 20px;
 }
 
-button {
-  margin: 5px;
-  padding: 10px 20px;
+.card-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin: 20px auto;
+  max-width: 700px;
 }
 
-select {
+.card-image {
+  width: 63mm;  /* 初期サイズ */
+  height: 88mm;  /* 初期サイズ */
+  object-fit: cover;  /* 画像のアスペクト比を維持 */
+  border: 2px solid #ccc;
+}
+
+button {
+  display: block;
+  margin: 20px auto;
+  padding: 10px 20px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+button:hover {
+  background-color: #45a049;
+}
+
+#custom-size {
   margin-top: 10px;
+}
+
+#file-input {
+  display: block;
+  margin: 20px auto;
 }
