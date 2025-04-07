@@ -3,34 +3,31 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>カードレイアウトツール</title>
+  <title>カード配置ツール</title>
   <style>
     body {
       font-family: sans-serif;
-      padding: 20px;
+      margin: 20px;
     }
-    #controls {
-      margin-bottom: 20px;
-    }
-    #card-grid {
+    .card-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
+      grid-template-columns: repeat(3, auto);
+      grid-gap: 10mm;
+      width: fit-content;
+      margin: 0 auto 20px;
     }
     .card-slot {
-      width: 88mm;
-      height: 63mm;
+      width: 63mm;
+      height: 88mm;
       border: 1px dashed #aaa;
-      position: relative;
       display: flex;
       justify-content: center;
       align-items: center;
-      background-color: #f9f9f9;
+      position: relative;
+      overflow: hidden;
     }
     .card-slot input {
       position: absolute;
-      top: 0;
-      left: 0;
       width: 100%;
       height: 100%;
       opacity: 0;
@@ -42,103 +39,128 @@
       object-fit: contain;
       transform: rotate(90deg);
     }
+    .controls {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    select, button {
+      margin: 5px;
+    }
   </style>
 </head>
 <body>
-  <h1>カードレイアウトツール</h1>
-  <div id="controls">
-    <label>サイズ:
+  <h1>カード画像配置ツール（3×3）</h1>
+
+  <div class="controls">
+    <label>カードサイズ:
       <select id="cardSize">
-        <option value="63x88">63mm x 88mm</option>
-        <option value="59x86">59mm x 86mm</option>
-        <option value="custom">その他</option>
+        <option value="63x88">63mm × 88mm</option>
+        <option value="59x86">59mm × 86mm</option>
+        <option value="custom">カスタム</option>
       </select>
     </label>
-    <input type="number" id="customWidth" placeholder="幅(mm)" style="display:none;">
-    <input type="number" id="customHeight" placeholder="高さ(mm)" style="display:none;">
-    <button onclick="exportPDF()">PDF保存</button>
-    <button onclick="resetGrid()">リセット</button>
+    <input type="number" id="customWidth" placeholder="幅(mm)" style="display:none;" />
+    <input type="number" id="customHeight" placeholder="高さ(mm)" style="display:none;" />
+    <br>
+    <button onclick="resetImages()">リセット</button>
+    <button onclick="savePDF()">PDF保存</button>
   </div>
 
-  <div id="card-grid">
-    <!-- 9枚のカード枠 -->
-    <div class="card-slot"><input type="file" accept="image/*"></div>
-    <div class="card-slot"><input type="file" accept="image/*"></div>
-    <div class="card-slot"><input type="file" accept="image/*"></div>
-    <div class="card-slot"><input type="file" accept="image/*"></div>
-    <div class="card-slot"><input type="file" accept="image/*"></div>
-    <div class="card-slot"><input type="file" accept="image/*"></div>
-    <div class="card-slot"><input type="file" accept="image/*"></div>
-    <div class="card-slot"><input type="file" accept="image/*"></div>
-    <div class="card-slot"><input type="file" accept="image/*"></div>
+  <div class="card-grid" id="cardGrid">
+    <!-- 9個のスロット -->
+    <div class="card-slot"><input type="file" accept="image/*" onchange="loadImage(event, 0)"><img></div>
+    <div class="card-slot"><input type="file" accept="image/*" onchange="loadImage(event, 1)"><img></div>
+    <div class="card-slot"><input type="file" accept="image/*" onchange="loadImage(event, 2)"><img></div>
+    <div class="card-slot"><input type="file" accept="image/*" onchange="loadImage(event, 3)"><img></div>
+    <div class="card-slot"><input type="file" accept="image/*" onchange="loadImage(event, 4)"><img></div>
+    <div class="card-slot"><input type="file" accept="image/*" onchange="loadImage(event, 5)"><img></div>
+    <div class="card-slot"><input type="file" accept="image/*" onchange="loadImage(event, 6)"><img></div>
+    <div class="card-slot"><input type="file" accept="image/*" onchange="loadImage(event, 7)"><img></div>
+    <div class="card-slot"><input type="file" accept="image/*" onchange="loadImage(event, 8)"><img></div>
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script>
-    document.querySelectorAll('input[type=file]').forEach(input => {
-      input.addEventListener('change', function (e) {
-        const file = e.target.files[0];
-        const slot = e.target.parentElement;
-        const reader = new FileReader();
-        reader.onload = function (event) {
-          let img = slot.querySelector('img');
-          if (!img) {
-            img = document.createElement('img');
-            slot.appendChild(img);
-          }
-          img.src = event.target.result;
-        };
-        if (file) reader.readAsDataURL(file);
-      });
-    });
+    const grid = document.getElementById("cardGrid");
 
-    function resetGrid() {
-      document.querySelectorAll('.card-slot').forEach(slot => {
-        slot.innerHTML = '<input type="file" accept="image/*">';
-      });
+    function mmToPx(mm) {
+      return mm * 3.7795; // おおよその変換
     }
 
-    function exportPDF() {
-      const { jsPDF } = window.jspdf;
-      const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+    function updateSlotSize() {
+      const sel = document.getElementById("cardSize").value;
+      let width, height;
 
-      const sizeOption = document.getElementById("cardSize").value;
-      let cardW = 63, cardH = 88;
-      if (sizeOption === "59x86") {
-        cardW = 59;
-        cardH = 86;
-      } else if (sizeOption === "custom") {
-        cardW = parseFloat(document.getElementById("customWidth").value) || 63;
-        cardH = parseFloat(document.getElementById("customHeight").value) || 88;
+      if (sel === "63x88") {
+        width = 63; height = 88;
+      } else if (sel === "59x86") {
+        width = 59; height = 86;
+      } else {
+        width = parseFloat(document.getElementById("customWidth").value) || 63;
+        height = parseFloat(document.getElementById("customHeight").value) || 88;
       }
 
-      const margin = 2;
-      const grid = document.querySelectorAll('.card-slot');
-
-      grid.forEach((slot, i) => {
-        const img = slot.querySelector('img');
-        if (img) {
-          const canvas = document.createElement('canvas');
-          canvas.width = img.naturalHeight; // rotate
-          canvas.height = img.naturalWidth;
-          const ctx = canvas.getContext('2d');
-          ctx.translate(canvas.width / 2, canvas.height / 2);
-          ctx.rotate(90 * Math.PI / 180);
-          ctx.drawImage(img, -img.naturalWidth / 2, -img.naturalHeight / 2);
-          const x = (i % 3) * (cardW + margin) + 10;
-          const y = Math.floor(i / 3) * (cardH + margin) + 10;
-          pdf.addImage(canvas.toDataURL('image/png'), 'PNG', x, y, cardW, cardH);
-        }
+      document.querySelectorAll('.card-slot').forEach(slot => {
+        slot.style.width = `${width}mm`;
+        slot.style.height = `${height}mm`;
       });
-
-      pdf.save('cards.pdf');
     }
 
     document.getElementById("cardSize").addEventListener("change", e => {
-      const val = e.target.value;
-      document.getElementById("customWidth").style.display = val === 'custom' ? 'inline' : 'none';
-      document.getElementById("customHeight").style.display = val === 'custom' ? 'inline' : 'none';
+      const custom = e.target.value === "custom";
+      document.getElementById("customWidth").style.display = custom ? "inline" : "none";
+      document.getElementById("customHeight").style.display = custom ? "inline" : "none";
+      updateSlotSize();
     });
+    document.getElementById("customWidth").addEventListener("input", updateSlotSize);
+    document.getElementById("customHeight").addEventListener("input", updateSlotSize);
+
+    function loadImage(event, index) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = grid.children[index].querySelector("img");
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function resetImages() {
+      document.querySelectorAll(".card-slot img").forEach(img => img.src = "");
+    }
+
+    async function savePDF() {
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const width = 63;
+      const height = 88;
+      let x = 10, y = 10;
+
+      for (let i = 0; i < 9; i++) {
+        const img = grid.children[i].querySelector("img");
+        if (img && img.src) {
+          await new Promise(resolve => {
+            const tempImg = new Image();
+            tempImg.onload = () => {
+              pdf.addImage(tempImg, 'PNG', x, y, height, width, undefined, 'FAST');
+              x += height + 2;
+              if (i % 3 === 2) {
+                x = 10;
+                y += width + 2;
+              }
+              resolve();
+            };
+            tempImg.src = img.src;
+          });
+        }
+      }
+
+      pdf.save("cards.pdf");
+    }
+
+    // 初期化
+    updateSlotSize();
   </script>
 </body>
 </html>
