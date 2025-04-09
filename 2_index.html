@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>カード配置ツール v1.1</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      background: #f7f7f7;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    #card-container {
+      display: grid;
+      grid-template-columns: repeat(3, 88mm);
+      grid-template-rows: repeat(3, 63mm);
+      gap: 5mm;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    .card-slot {
+      border: 1px dashed #aaa;
+      background: white;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .card-slot img {
+      max-height: 100%;
+      max-width: 100%;
+      object-fit: contain;
+    }
+
+    .controls {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    .card-slot label {
+      position: absolute;
+      bottom: 4px;
+      right: 4px;
+      background: rgba(255, 255, 255, 0.7);
+      font-size: 12px;
+      padding: 2px 6px;
+      cursor: pointer;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      margin: 5px;
+      padding: 10px 20px;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+  <h1>カード配置ツール v1.1</h1>
+
+  <div id="card-container">
+    <!-- 9枠 -->
+    <div class="card-slot"><label><input type="file" accept="image/*" onchange="loadImage(this)" />選択</label></div>
+    <div class="card-slot"><label><input type="file" accept="image/*" onchange="loadImage(this)" />選択</label></div>
+    <div class="card-slot"><label><input type="file" accept="image/*" onchange="loadImage(this)" />選択</label></div>
+    <div class="card-slot"><label><input type="file" accept="image/*" onchange="loadImage(this)" />選択</label></div>
+    <div class="card-slot"><label><input type="file" accept="image/*" onchange="loadImage(this)" />選択</label></div>
+    <div class="card-slot"><label><input type="file" accept="image/*" onchange="loadImage(this)" />選択</label></div>
+    <div class="card-slot"><label><input type="file" accept="image/*" onchange="loadImage(this)" />選択</label></div>
+    <div class="card-slot"><label><input type="file" accept="image/*" onchange="loadImage(this)" />選択</label></div>
+    <div class="card-slot"><label><input type="file" accept="image/*" onchange="loadImage(this)" />選択</label></div>
+  </div>
+
+  <div class="controls">
+    <button onclick="downloadPDF()">PDF保存</button>
+    <button onclick="resetImages()">リセット</button>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script>
+    function loadImage(input) {
+      const file = input.files[0];
+      if (file && file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          const slot = input.closest('.card-slot');
+          const existingImg = slot.querySelector('img');
+          if (existingImg) existingImg.remove();
+
+          const img = document.createElement('img');
+          img.src = e.target.result;
+          slot.appendChild(img);
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function resetImages() {
+      document.querySelectorAll('.card-slot img').forEach(img => img.remove());
+      document.querySelectorAll('.card-slot input').forEach(input => input.value = '');
+    }
+
+    async function downloadPDF() {
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF("portrait", "mm", "a4");
+
+      const container = document.getElementById("card-container");
+
+      const canvas = await html2canvas(container, {
+        scale: 2,
+        useCORS: true,
+      });
+
+      const imgData = canvas.toDataURL("image/png");
+      const imgProps = pdf.getImageProperties(imgData);
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+      pdf.save("cards_layout.pdf");
+    }
+  </script>
+</body>
+</html>
