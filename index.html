@@ -1,205 +1,25 @@
 <!DOCTYPE html>
 <html lang="ja">
-
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>カード画像配置ツール v1.2</title>
-  <style>
-    body {
-      font-family: sans-serif;
-      text-align: center;
-      background: #f5f5f5;
-      margin: 0;
-      padding: 1rem;
-    }
-    h1 {
-      font-size: 1.5rem;
-      margin-bottom: 1rem;
-    }
-    .card-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      justify-items: center;
-      margin-bottom: 1rem;
-    }
-    .card-slot {
-      width: 63mm;
-      height: 88mm;
-      border: 1px dashed #aaa;
-      position: relative;
-      background-color: white;
-      overflow: hidden;
-    }
-    .card-slot img {
-      max-width: 100%;
-      max-height: 100%;
-      object-fit: contain;
-    }
-    .controls {
-      margin-top: 1rem;
-    }
-    .card-slot input[type='file'] {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      opacity: 0;
-      cursor: pointer;
-    }
-    .card-slot.dragover {
-      border-color: #00aaff;
-      background-color: #e0f7ff;
-    }
-    button, select, input[type='number'] {
-      margin: 0.5rem;
-      padding: 0.5rem;
-      font-size: 1rem;
-    }
-  </style>
+  <title>カード画像配置ツール v1.3</title>
+  <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
-  <h1>カード画像配置ツール v1.2</h1>
+  <h1>カード画像配置ツール v1.3</h1>
   <div>
-    サイズ選択：
-    <select id="sizeSelector">
-      <option value="63x88">63mm × 88mm</option>
-      <option value="59x86">59mm × 86mm</option>
-      <option value="custom">カスタム</option>
-    </select>
-    <input type="number" id="customWidth" placeholder="幅(mm)" style="display:none;" />
-    <input type="number" id="customHeight" placeholder="高さ(mm)" style="display:none;" />
+    <label>画像アップロード:
+      <input type="file" id="imageUpload" multiple accept="image/*" />
+    </label>
   </div>
-  <div class="card-grid" id="cardGrid">
-    <!-- 9 slots -->
+  <div>
+    <label>カード横幅 (mm): <input type="number" id="cardWidth" value="63" /></label>
+    <label>カード高さ (mm): <input type="number" id="cardHeight" value="88" /></label>
+    <button onclick="applyCardSize()">サイズを適用</button>
   </div>
-  <div class="controls">
-    <button onclick="downloadPDF()">PDFとして保存</button>
-    <button onclick="resetImages()">画像をリセット</button>
-  </div>
-
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script>
-    const { jsPDF } = window.jspdf;
-
-    function mmToPt(mm) {
-      return mm * 2.83465;
-    }
-
-    const cardGrid = document.getElementById("cardGrid");
-
-    function createSlots(widthMM, heightMM) {
-      cardGrid.innerHTML = "";
-      for (let i = 0; i < 9; i++) {
-        const slot = document.createElement("div");
-        slot.className = "card-slot";
-        slot.style.width = `${widthMM}mm`;
-        slot.style.height = `${heightMM}mm`;
-
-        const img = document.createElement("img");
-        img.style.display = "none";
-        slot.appendChild(img);
-
-        const input = document.createElement("input");
-        input.type = "file";
-        input.accept = "image/*";
-        input.onchange = (e) => {
-          const file = e.target.files[0];
-          if (file) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-              img.src = e.target.result;
-              img.style.display = "block";
-            };
-            reader.readAsDataURL(file);
-          }
-        };
-        slot.appendChild(input);
-
-        // ドラッグ＆ドロップ
-        slot.addEventListener("dragover", (e) => {
-          e.preventDefault();
-          slot.classList.add("dragover");
-        });
-        slot.addEventListener("dragleave", () => {
-          slot.classList.remove("dragover");
-        });
-        slot.addEventListener("drop", (e) => {
-          e.preventDefault();
-          slot.classList.remove("dragover");
-          const file = e.dataTransfer.files[0];
-          if (file && file.type.startsWith("image/")) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-              img.src = e.target.result;
-              img.style.display = "block";
-            };
-            reader.readAsDataURL(file);
-          }
-        });
-
-        cardGrid.appendChild(slot);
-      }
-    }
-
-    function resetImages() {
-      document.querySelectorAll(".card-slot img").forEach((img) => {
-        img.src = "";
-        img.style.display = "none";
-      });
-    }
-
-    function downloadPDF() {
-      const doc = new jsPDF({ orientation: "portrait", unit: "pt", format: "a4" });
-      const widthMM = getCurrentWidth();
-      const heightMM = getCurrentHeight();
-      const widthPt = mmToPt(widthMM);
-      const heightPt = mmToPt(heightMM);
-      const marginPt = mmToPt(2);
-
-      const images = document.querySelectorAll(".card-slot img");
-      let x = 40;
-      let y = 40;
-      let count = 0;
-
-      images.forEach((img) => {
-        if (img.src && img.style.display !== "none") {
-          doc.addImage(img.src, "PNG", x, y, widthPt, heightPt);
-        }
-        count++;
-        x += widthPt + marginPt;
-        if (count % 3 === 0) {
-          x = 40;
-          y += heightPt + marginPt;
-        }
-      });
-
-      doc.save("cards.pdf");
-    }
-
-    function getCurrentWidth() {
-      const sel = document.getElementById("sizeSelector").value;
-      if (sel === "63x88") return 63;
-      if (sel === "59x86") return 59;
-      return parseFloat(document.getElementById("customWidth").value || 63);
-    }
-    function getCurrentHeight() {
-      const sel = document.getElementById("sizeSelector").value;
-      if (sel === "63x88") return 88;
-      if (sel === "59x86") return 86;
-      return parseFloat(document.getElementById("customHeight").value || 88);
-    }
-
-    document.getElementById("sizeSelector").addEventListener("change", (e) => {
-      const custom = e.target.value === "custom";
-      document.getElementById("customWidth").style.display = custom ? "inline-block" : "none";
-      document.getElementById("customHeight").style.display = custom ? "inline-block" : "none";
-      createSlots(getCurrentWidth(), getCurrentHeight());
-    });
-
-    createSlots(63, 88);
-  </script>
+  <button onclick="generatePDF()">PDF保存</button>
+  <div id="canvasContainer"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js"></script>
+  <script src="script.js"></script>
 </body>
-
 </html>
