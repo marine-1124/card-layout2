@@ -1,46 +1,34 @@
-let cardWidth = 63;
-let cardHeight = 88;
+function downloadPDF() {
+  const doc = new jsPDF({ orientation: "portrait", unit: "pt", format: "a4" });
+  const widthMM = getCurrentWidth();
+  const heightMM = getCurrentHeight();
+  const widthPt = mmToPt(widthMM);
+  const heightPt = mmToPt(heightMM);
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const marginBetween = mmToPt(2); // カード間のマージン
 
-document.getElementById("imageUpload").addEventListener("change", handleImageUpload);
+  const totalCardWidth = widthPt * 3 + marginBetween * 2;
+  const startX = (pageWidth - totalCardWidth) / 2;
+  const startY = 40;
 
-function applyCardSize() {
-  cardWidth = parseFloat(document.getElementById("cardWidth").value);
-  cardHeight = parseFloat(document.getElementById("cardHeight").value);
-  layoutCards(window.uploadedFiles || []);
-}
+  const images = document.querySelectorAll(".card-slot img");
+  let x = startX;
+  let y = startY;
+  let count = 0;
 
-function handleImageUpload(event) {
-  const files = Array.from(event.target.files);
-  window.uploadedFiles = files;
-  layoutCards(files);
-}
-
-function layoutCards(files) {
-  const container = document.getElementById("canvasContainer");
-  container.innerHTML = "";
-
-  files.forEach((file, index) => {
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      const img = document.createElement("img");
-      img.src = e.target.result;
-      img.classList.add("card");
-      img.style.width = `${cardWidth}mm`;
-      img.style.height = `${cardHeight}mm`;
-      container.appendChild(img);
-    };
-    reader.readAsDataURL(file);
+  images.forEach((img) => {
+    if (img.src && img.style.display !== "none") {
+      doc.addImage(img.src, "PNG", x, y, widthPt, heightPt);
+    }
+    count++;
+    if (count % 3 === 0) {
+      x = startX;
+      y += heightPt + marginBetween;
+    } else {
+      x += widthPt + marginBetween;
+    }
   });
-}
 
-function generatePDF() {
-  const element = document.getElementById("canvasContainer");
-  const opt = {
-    margin: [10, 10], // 上下左右マージン（mm）
-    filename: 'card_layout.pdf',
-    image: { type: 'jpeg', quality: 1 },
-    html2canvas: { scale: 2 },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-  };
-  html2pdf().set(opt).from(element).save();
+  doc.save("cards.pdf");
 }
