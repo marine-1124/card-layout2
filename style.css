@@ -58,16 +58,3 @@ input[type='number'] {
   padding: 0.5rem;
   font-size: 1rem;
 }
-
-/* 印刷時の余白最適化 */
-@media print {
-  body {
-    margin: 0;
-    padding: 0;
-    background: white;
-  }
-
-  .card-grid {
-    page-break-inside: avoid;
-  }
-}

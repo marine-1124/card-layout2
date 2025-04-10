@@ -7,6 +7,7 @@ function mmToPt(mm) {
 
 const cardGrid = document.getElementById("cardGrid");
 
+// カードサイズを設定
 function createSlots(widthMM, heightMM) {
   cardGrid.innerHTML = "";
   for (let i = 0; i < 9; i++) {
@@ -88,24 +89,36 @@ function downloadPDF() {
   const heightMM = getCurrentHeight();
   const widthPt = mmToPt(widthMM);
   const heightPt = mmToPt(heightMM);
-  const marginPt = mmToPt(2);
+  const marginPt = mmToPt(5);
 
   const images = document.querySelectorAll(".card-slot img");
-  let x = 40;
-  let y = 40;
+  let x = marginPt;
+  let y = marginPt;
   let count = 0;
 
-  images.forEach((img) => {
+  const pageCount = parseInt(document.getElementById("pdfPageCount").value);
+  const totalSlots = pageCount * 9;
+
+  // PDFページごとのカード画像追加
+  for (let i = 0; i < totalSlots; i++) {
+    const img = images[i % 9]; // 9枚分繰り返し
     if (img.src && img.style.display !== "none") {
       doc.addImage(img.src, "PNG", x, y, widthPt, heightPt);
     }
     count++;
     x += widthPt + marginPt;
+
     if (count % 3 === 0) {
-      x = 40;
+      x = marginPt;
       y += heightPt + marginPt;
     }
-  });
+
+    if (count % 27 === 0 && i < totalSlots - 1) { // 1ページに9枚×3行
+      doc.addPage();
+      x = marginPt;
+      y = marginPt;
+    }
+  }
 
   doc.save("cards.pdf");
 }
