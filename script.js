@@ -90,6 +90,7 @@ function downloadPDF() {
   const widthPt = mmToPt(widthMM);
   const heightPt = mmToPt(heightMM);
   const marginPt = mmToPt(5);
+  const gapPt = mmToPt(3); // カード間の隙間
 
   const images = document.querySelectorAll(".card-slot img");
   let x = marginPt;
@@ -99,6 +100,10 @@ function downloadPDF() {
   const pageCount = parseInt(document.getElementById("pdfPageCount").value);
   const totalSlots = pageCount * 9;
 
+  // 1ページに配置するカードの列数と行数を決定
+  const columns = 3;
+  const rows = 3;
+
   // PDFページごとのカード画像追加
   for (let i = 0; i < totalSlots; i++) {
     const img = images[i % 9]; // 9枚分繰り返し
@@ -106,19 +111,24 @@ function downloadPDF() {
       doc.addImage(img.src, "PNG", x, y, widthPt, heightPt);
     }
     count++;
-    x += widthPt + marginPt;
+    x += widthPt + gapPt;
 
-    if (count % 3 === 0) {
+    if (count % columns === 0) {
       x = marginPt;
-      y += heightPt + marginPt;
+      y += heightPt + gapPt;
     }
 
-    if (count % 27 === 0 && i < totalSlots - 1) { // 1ページに9枚×3行
+    if (count % (columns * rows) === 0 && i < totalSlots - 1) { // 1ページに9枚×3行
       doc.addPage();
       x = marginPt;
       y = marginPt;
     }
   }
+
+  // 最後に均等余白を確保するための調整
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const totalWidth = columns * widthPt + (columns - 1) * gapPt;
+  const leftOffset = (pageWidth - totalWidth) / 2;
 
   doc.save("cards.pdf");
 }
@@ -137,11 +147,15 @@ function getCurrentHeight() {
   return parseFloat(document.getElementById("customHeight").value || 88);
 }
 
-document.getElementById("sizeSelector").addEventListener("change", (e) => {
-  const custom = e.target.value === "custom";
-  document.getElementById("customWidth").style.display = custom ? "inline-block" : "none";
-  document.getElementById("customHeight").style.display = custom ? "inline-block" : "none";
-  createSlots(getCurrentWidth(), getCurrentHeight());
+// 初期設定
+document.getElementById("sizeSelector").addEventListener("change", () => {
+  const customFields = document.getElementById("customWidth").parentElement;
+  if (document.getElementById("sizeSelector").value === "custom") {
+    customFields.style.display = "block";
+  } else {
+    customFields.style.display = "none";
+  }
 });
 
-createSlots(63, 88);
+// 初期化
+createSlots(getCurrentWidth(), getCurrentHeight());
